@@ -1,5 +1,6 @@
 services:
   minio:
+
     image: "mirror.gcr.io/minio/minio"
     container_name: minio
     ports:
