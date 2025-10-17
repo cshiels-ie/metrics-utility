@@ -2,6 +2,17 @@ import importlib.util
 import os
 import sys
 
+# Export async library interface for programmatic use
+from metrics_utility.lib import (
+    AsyncMetricsClient,
+    CollectionConfig,
+    CollectionResult,
+    MetricsError,
+    ReportConfig,
+    ReportResult,
+    ReportType,
+    ShipTarget,
+)
 from metrics_utility.management_utility import ManagementUtility
 
 
@@ -33,3 +44,17 @@ def manage():
 
     utility = ManagementUtility(sys.argv)
     utility.execute()
+
+
+__all__ = [
+    'manage',
+    'prepare',
+    'AsyncMetricsClient',
+    'CollectionConfig',
+    'ReportConfig',
+    'CollectionResult',
+    'ReportResult',
+    'MetricsError',
+    'ShipTarget',
+    'ReportType',
+]

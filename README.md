@@ -1,11 +1,12 @@
 # AAP metrics-utility
 
-A standalone CLI utility for collecting and reporting metrics from [Ansible Automation Platform (AAP)](https://www.ansible.com/products/automation-platform) Controller instances. This tool allows users to:
+A standalone CLI utility and async library for collecting and reporting metrics from [Ansible Automation Platform (AAP)](https://www.ansible.com/products/automation-platform) Controller instances. This tool allows users to:
 
 - Collect and analyze Controller usage data
 - Generate reports (`CCSP`, `CCSPv2`, `RENEWAL_GUIDANCE`)
 - Support multiple storage adapters for data persistence (local dir, S3)
 - Push metrics data to `console.redhat.com`
+- **NEW**: Async library interface for programmatic integration
 
 ## Quick Start
 
@@ -216,6 +217,54 @@ uv run ./manage.py build_report --month=2024-04 --force
 # resulting XLSX
 ls metrics_utility/test/test_data/reports/2024/04/
 ```
+
+## Async Library Usage
+
+In addition to CLI usage, metrics-utility can be used as an async library for programmatic integration:
+
+```python
+import asyncio
+from datetime import datetime, timedelta
+from metrics_utility import (
+    AsyncMetricsClient,
+    CollectionConfig,
+    ReportConfig,
+    ShipTarget,
+    ReportType,
+)
+
+async def main():
+    client = AsyncMetricsClient()
+    
+    # Collect data
+    collection_config = CollectionConfig(
+        ship_target=ShipTarget.DIRECTORY,
+        ship_path="./data",
+        since=datetime.now() - timedelta(days=7),
+        ship=True
+    )
+    
+    result = await client.collect_data(collection_config)
+    if result.success:
+        print(f"Collected: {result.tarballs}")
+    
+    # Generate report
+    report_config = ReportConfig(
+        report_type=ReportType.CCSPV2,
+        ship_target=ShipTarget.DIRECTORY,
+        ship_path="./data",
+        month="2024-04",
+        force=True
+    )
+    
+    report_result = await client.generate_report(report_config)
+    if report_result.success:
+        print(f"Report: {report_result.report_path}")
+
+asyncio.run(main())
+```
+
+For detailed async library documentation, see [`metrics_utility/lib/README.md`](./metrics_utility/lib/README.md).
 
 #### Example RENEWAL\_GUIDANCE run
 
