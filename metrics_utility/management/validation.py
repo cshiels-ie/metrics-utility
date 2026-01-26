@@ -158,6 +158,56 @@ def handle_crc_ship_target():
     return billing_provider_params
 
 
+def handle_storage_db_params():
+    """
+    Validate and return storage database parameters from environment variables.
+
+    Required environment variables:
+    - METRICS_UTILITY_STORAGE_DB_HOST
+    - METRICS_UTILITY_STORAGE_DB_NAME
+    - METRICS_UTILITY_STORAGE_DB_USER
+    - METRICS_UTILITY_STORAGE_DB_PASSWORD
+
+    Optional environment variables:
+    - METRICS_UTILITY_STORAGE_DB_PORT (default: 5432)
+    - METRICS_UTILITY_STORAGE_DB_SCHEMA (default: public)
+
+    Returns:
+        dict: Storage database parameters
+
+    Raises:
+        MissingRequiredEnvVar: If any required environment variable is missing
+    """
+    host = os.getenv('METRICS_UTILITY_STORAGE_DB_HOST')
+    port = os.getenv('METRICS_UTILITY_STORAGE_DB_PORT', '5432')
+    name = os.getenv('METRICS_UTILITY_STORAGE_DB_NAME')
+    user = os.getenv('METRICS_UTILITY_STORAGE_DB_USER')
+    password = os.getenv('METRICS_UTILITY_STORAGE_DB_PASSWORD')
+    schema = os.getenv('METRICS_UTILITY_STORAGE_DB_SCHEMA', 'public')
+
+    missing = []
+    if not host:
+        missing.append('METRICS_UTILITY_STORAGE_DB_HOST - storage database hostname')
+    if not name:
+        missing.append('METRICS_UTILITY_STORAGE_DB_NAME - storage database name')
+    if not user:
+        missing.append('METRICS_UTILITY_STORAGE_DB_USER - storage database username')
+    if not password:
+        missing.append('METRICS_UTILITY_STORAGE_DB_PASSWORD - storage database password')
+
+    if missing:
+        raise MissingRequiredEnvVar(f'Missing required storage database environment variables: {", ".join(missing)}')
+
+    return {
+        'host': host,
+        'port': port,
+        'name': name,
+        'user': user,
+        'password': password,
+        'schema': schema,
+    }
+
+
 def validate_report_type(errors, method):
     """
     Validates the 'METRICS_UTILITY_REPORT_TYPE' environment variable against a set of valid report types.
