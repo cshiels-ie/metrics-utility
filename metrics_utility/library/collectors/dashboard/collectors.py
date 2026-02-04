@@ -70,7 +70,8 @@ def dashboard_job_templates(since: datetime, until: datetime, db, **kwargs) -> d
             template_data = dict(zip(columns, row))
 
             # Calculate derived fields
-            elapsed_seconds = template_data.get('elapsed', 0) or 0
+            # Convert to float to avoid Decimal/float type mixing issues
+            elapsed_seconds = float(template_data.get('elapsed', 0) or 0)
             template_data['elapsed_str'] = format_elapsed_time(elapsed_seconds)
 
             # Add time estimate fields (defaults since AWX doesn't store these)
@@ -82,7 +83,8 @@ def dashboard_job_templates(since: datetime, until: datetime, db, **kwargs) -> d
             template_data['time_taken_create_automation_minutes'] = auto_time_mins
 
             # Cost calculations (hourly rate: $50/hour labor)
-            runs = template_data.get('runs', 0)
+            # Convert to float to handle potential Decimal types from database
+            runs = float(template_data.get('runs', 0))
 
             hourly_rate = 50.0
 
@@ -99,10 +101,18 @@ def dashboard_job_templates(since: datetime, until: datetime, db, **kwargs) -> d
             # Calculate savings
             savings = manual_cost - auto_cost
 
-            # Format as currency strings
-            template_data['automated_costs'] = f'${auto_cost:.2f}'
-            template_data['manual_costs'] = f'${manual_cost:.2f}'
-            template_data['savings'] = f'${savings:.2f}'
+            # Store as numeric values (frontend will format with currency symbols)
+            template_data['automated_costs'] = round(auto_cost, 2)
+            template_data['manual_costs'] = round(manual_cost, 2)
+            template_data['savings'] = round(savings, 2)
+
+            # Ensure numeric fields are proper types (not Decimal)
+            template_data['runs'] = int(runs)
+            template_data['elapsed'] = elapsed_seconds
+            template_data['num_hosts'] = int(template_data.get('num_hosts', 0) or 0)
+            template_data['successful_runs'] = int(template_data.get('successful_runs', 0) or 0)
+            template_data['failed_runs'] = int(template_data.get('failed_runs', 0) or 0)
+            template_data['cluster'] = int(template_data.get('cluster', 1) or 1)
 
             results.append(template_data)
 
