@@ -326,7 +326,7 @@ class EventModulesAnonymizedRollup(BaseAnonymizedRollup):
             if isinstance(parsed, list):
                 return len(parsed) > 0
             return bool(parsed)
-        except (json.JSONDecodeError, TypeError, ValueError):
+        except (TypeError, ValueError):
             return False
 
     def _parse_warnings_deprecations(self, dataframe):
