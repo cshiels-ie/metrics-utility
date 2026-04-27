@@ -1,3 +1,5 @@
+"""Collector for job event records from the Controller database (CCSP variant)."""
+
 from ..util import DataframeOutput, collector, date_where, get_batch_size
 
 
@@ -18,6 +20,20 @@ _JOBEVENT_TYPES_SQL = ', '.join(f"'{t}'" for t in _JOBEVENT_TYPES)
 
 @collector
 def main_jobevent(*, db=None, since=None, until=None, output=DataframeOutput()):
+    """Collect job events joined with host-summary data for the CCSP report.
+
+    Filters ``main_jobhostsummary`` by *since*/*until* and then fetches the
+    corresponding events from ``main_jobevent`` for the matching jobs/hosts.
+
+    Args:
+        db: Django database connection.
+        since: Inclusive start datetime for the ``main_jobhostsummary.modified`` filter.
+        until: Exclusive end datetime for the same filter.
+        output: Output adapter (defaults to :class:`~..util.DataframeOutput`).
+
+    Returns:
+        pandas DataFrame with event fields, or list of CSV paths.
+    """
     where = date_where('main_jobhostsummary.modified', since, until)
 
     def build_query(jobevent_batch_filter='TRUE'):

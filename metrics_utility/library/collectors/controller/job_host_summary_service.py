@@ -1,8 +1,26 @@
+"""Collector for job_host_summary records used by the anonymized rollup service."""
+
 from ..util import DataframeOutput, collector, date_where, get_batch_size
 
 
 @collector
 def job_host_summary_service(*, db=None, since=None, until=None, output=DataframeOutput()):
+    """Collect job-host-summary records filtered by job finish time.
+
+    Unlike :func:`job_host_summary`, this variant filters on
+    ``main_unifiedjob.finished`` via a CTE, making it better suited to
+    time-windowed anonymized rollup collection where the job completion time
+    is the authoritative boundary.
+
+    Args:
+        db: Django database connection.
+        since: Inclusive start datetime for the job ``finished`` filter.
+        until: Exclusive end datetime for the job ``finished`` filter.
+        output: Output adapter (defaults to :class:`~..util.DataframeOutput`).
+
+    Returns:
+        pandas DataFrame or list of CSV file paths depending on *output*.
+    """
     jobs_where = date_where('mu.finished', since, until)
 
     def build_query(batch_filter='TRUE'):
