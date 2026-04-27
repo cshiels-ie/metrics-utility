@@ -8,11 +8,11 @@ from metrics_utility.library import CsvFileSplitter
 TIMESTAMP_CSV_LINE_LENGTH = 40
 
 
-def trivial_slicing(key, last_gather, since, until, **kwargs):
+def trivial_slicing(_key, _last_gather, since, until, **kwargs):
     return [(since, until)]
 
 
-def one_day_slicing(key, last_gather, since, until, **kwargs):
+def one_day_slicing(_key, _last_gather, since, until, **kwargs):
     since = since.replace(hour=0, minute=0, second=0, microsecond=0)
     until = until.replace(hour=0, minute=0, second=0, microsecond=0)
     start, end = since, None

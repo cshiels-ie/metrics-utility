@@ -10,7 +10,7 @@ class ExtractorTarballs:
     def __init__(self):
         log('library.extractors ExtractorTarballs.__init__')
 
-    def extract(self, local, only=None):
+    def extract(self, _local, only=None):
         log('library.extractors ExtractorTarballs.extract')
         if isinstance(only, str):
             yield FakeCSV(f'./{only}')

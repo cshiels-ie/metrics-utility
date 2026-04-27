@@ -27,10 +27,10 @@ def tempdir(prefix=None, cleanup=True):
             os.chdir(original_dir)
 
 
-def last_gather(db=None, key=None):
+def last_gather(**_kwargs):
     log('library.utils last_gather')
     return None
 
 
-def save_last_gather(db=None, key=None, value=None):
+def save_last_gather(**_kwargs):
     log('library.utils save_last_gather')

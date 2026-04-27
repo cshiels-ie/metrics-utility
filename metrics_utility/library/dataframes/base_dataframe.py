@@ -1,8 +1,8 @@
 import pandas as pd
 
 
-# f = path or file-like
 def from_csv(f):
+    """Read a CSV file or file-like object into a DataFrame."""
     return pd.read_csv(f)
 
 
@@ -76,8 +76,6 @@ class BaseDataframe:
     def postprocess(self, df):
         return df.reset_index()
 
-    # build_dataframe, where batches=iter_batches()
-    # FIXME: cli only?
     def from_tarballs(self, batches):
         # all-rows dataframe, no aggregation
         self.rollup = None
