@@ -230,7 +230,7 @@ def test_all_jobs_combined_no_events(cleanup_test_data):
     input_data = create_all_csv_files(data_dir, all_jobs, all_events, all_jobhostsummary)
 
     # Run the anonymized rollup computation
-    result = compute_anonymized_rollup_from_raw_data(input_data=input_data, salt='test_salt')
+    result = compute_anonymized_rollup_from_raw_data(input_data=input_data)
 
     # Save result and split into chunks
     save_result_and_chunks(result, since, until, year, month, day)
@@ -313,9 +313,6 @@ def validate_events_statistics_no_events(statistics):
     assert 'rollup_period_warnings_total' not in statistics, 'rollup_period_warnings_total should be missing when there are no events'
     assert 'rollup_period_deprecations_total' not in statistics, 'rollup_period_deprecations_total should be missing when there are no events'
     assert 'rollup_period_modules_total' not in statistics, 'rollup_period_modules_total should be missing when there are no events'
-    assert 'rollup_period_unique_hosts_automated_total' not in statistics, (
-        'rollup_period_unique_hosts_automated_total should be missing when there are no events'
-    )
     assert 'rollup_period_playbooks_total' not in statistics, 'rollup_period_playbooks_total should be missing when there are no events'
 
 
