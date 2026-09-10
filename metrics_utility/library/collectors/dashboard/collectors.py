@@ -35,6 +35,7 @@ class AWXJobType(TypedDict):
     id: int
     name: str
     status: str
+    launch_type: str | None
     unified_job_template_id: int | None
     organization_id: int | None
     started: datetime | None
@@ -56,7 +57,13 @@ class DashboardJobsResultType(TypedDict):
     results: list[AWXJobType]
 
 
-def _dashboard_job_labels(since: datetime, until: datetime, db, date_field: str = 'modified', **kwargs) -> dict[int, list[int]]:
+def _dashboard_job_labels(
+    since: datetime,
+    until: datetime,
+    db,
+    date_field: str = 'modified',
+    **kwargs,
+) -> dict[int, list[int]]:
     """
     Collect job labels for the dashboard.
 
@@ -97,7 +104,11 @@ def _dashboard_job_labels(since: datetime, until: datetime, db, date_field: str 
 
 
 def _dashboard_job_host_summaries(
-    since: datetime, until: datetime, db, date_field: str = 'modified', **kwargs
+    since: datetime,
+    until: datetime,
+    db,
+    date_field: str = 'modified',
+    **kwargs,
 ) -> dict[int, list[AWXJobHostSummaryType]]:
     """
     Collect job host summaries for the dashboard.
@@ -214,7 +225,13 @@ def dashboard_jobs(
     batched = after_id is not None
 
     if batched:
-        query, params = get_jobs_batch_query(since, until, after_id, batch_size, date_field=date_field)
+        query, params = get_jobs_batch_query(
+            since,
+            until,
+            after_id,
+            batch_size,
+            date_field=date_field,
+        )
     else:
         query, params = get_jobs_query(since, until, date_field=date_field)
 
@@ -268,6 +285,7 @@ def dashboard_jobs(
                 'started': data['started'],
                 'finished': data['finished'],
                 'status': data['status'],
+                'launch_type': data['launch_type'],
                 'elapsed': data['elapsed'],
                 'launched_by_id': data['launched_by_id'],
                 'launched_by_username': data['launched_by_username'],

@@ -9,7 +9,11 @@ def _validate_date_field(date_field: str) -> None:
         raise ValueError(f'date_field must be one of {sorted(_ALLOWED_DATE_FIELDS)}, got {date_field!r}')
 
 
-def get_min_max_job_id_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_min_max_job_id_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+) -> tuple[str, list]:
     """
     Return the min and max job IDs for the filtered window.
 
@@ -35,15 +39,14 @@ def get_min_max_job_id_query(since: datetime, until: datetime, date_field: str =
     return query, params
 
 
-def get_where_clause(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_where_clause(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+) -> tuple[str, list]:
     """
     Generate SQL WHERE clause for filtering jobs by a date range.
-    Excludes sync and workflow jobs and includes only jobs with status 'failed' or 'successful'.
-
-    Workflow child jobs (``launch_type = 'workflow'``) are excluded because they have no
-    reliable user attribution (``launched_by_id`` is NULL for them in ``_JOBS_BASE_SQL``),
-    which caused the Successful/Failed totals to be inflated relative to the Top 5 Users
-    breakdown (AAP-74848 / AAP-85129).
+    Includes all launch types and only jobs with status 'failed' or 'successful'.
 
     Args:
         since: Start of date range (inclusive)
@@ -58,16 +61,19 @@ def get_where_clause(since: datetime, until: datetime, date_field: str = 'modifi
     """
     _validate_date_field(date_field)
     where_clause = f"""
-    WHERE uj.launch_type NOT IN (%s, %s)
-    AND (uj.status= %s OR uj.status = %s)
+    WHERE (uj.status= %s OR uj.status = %s)
     AND uj.{date_field} >= %s
     AND uj.{date_field} < %s
     """
-    params = ['sync', 'workflow', 'failed', 'successful', since.isoformat(), until.isoformat()]
+    params = ['failed', 'successful', since.isoformat(), until.isoformat()]
     return where_clause, params
 
 
-def get_job_labels_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_job_labels_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+) -> tuple[str, list]:
     """
     Generate SQL query to fetch job labels for jobs executed within the specified date range.
 
@@ -96,7 +102,11 @@ def get_job_labels_query(since: datetime, until: datetime, date_field: str = 'mo
     return query, params
 
 
-def get_job_host_summaries_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_job_host_summaries_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+) -> tuple[str, list]:
     """
     Generate SQL query to fetch job host summaries for jobs executed within the specified date range.
 
@@ -135,6 +145,7 @@ _JOBS_BASE_SQL = """SELECT
     uj.started,
     uj.finished,
     uj.status,
+    uj.launch_type,
     uj.elapsed,
     CASE WHEN
     uj.launch_type ='manual' or uj.launch_type ='relaunch' then u.id
@@ -155,7 +166,11 @@ _JOBS_BASE_SQL = """SELECT
     LEFT JOIN main_unifiedjobtemplate ujp on ujp.id = mj.project_id"""
 
 
-def get_jobs_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_jobs_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+) -> tuple[str, list]:
     """
     Generate SQL query to fetch jobs executed within the specified date range.
 
@@ -174,7 +189,13 @@ def get_jobs_query(since: datetime, until: datetime, date_field: str = 'modified
     return query, params
 
 
-def get_jobs_batch_query(since: datetime, until: datetime, after_id: int, batch_size: int, date_field: str = 'modified') -> tuple[str, list]:
+def get_jobs_batch_query(
+    since: datetime,
+    until: datetime,
+    after_id: int,
+    batch_size: int,
+    date_field: str = 'modified',
+) -> tuple[str, list]:
     """
     Cursor-paginated variant of ``get_jobs_query``.
 
