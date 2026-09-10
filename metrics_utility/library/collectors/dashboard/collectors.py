@@ -62,7 +62,6 @@ def _dashboard_job_labels(
     until: datetime,
     db,
     date_field: str = 'modified',
-    include_sync_workflow_jobs: bool = False,
     **kwargs,
 ) -> dict[int, list[int]]:
     """
@@ -89,7 +88,7 @@ def _dashboard_job_labels(
     }
     """
 
-    query, params = get_job_labels_query(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
+    query, params = get_job_labels_query(since, until, date_field=date_field)
     result = {}
     with db.cursor() as cursor:
         cursor.execute(query, params)
@@ -109,7 +108,6 @@ def _dashboard_job_host_summaries(
     until: datetime,
     db,
     date_field: str = 'modified',
-    include_sync_workflow_jobs: bool = False,
     **kwargs,
 ) -> dict[int, list[AWXJobHostSummaryType]]:
     """
@@ -140,7 +138,7 @@ def _dashboard_job_host_summaries(
         ...
     }
     """
-    query, params = get_job_host_summaries_query(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
+    query, params = get_job_host_summaries_query(since, until, date_field=date_field)
     result = {}
     with db.cursor() as cursor:
         cursor.execute(query, params)
@@ -168,7 +166,6 @@ def dashboard_jobs(
     after_id: int | None = None,
     batch_size: int | None = None,
     date_field: str = 'modified',
-    include_sync_workflow_jobs: bool = False,
 ) -> DashboardJobsResultType:
     """
     Collect job data for the dashboard.
@@ -234,10 +231,9 @@ def dashboard_jobs(
             after_id,
             batch_size,
             date_field=date_field,
-            include_sync_workflow_jobs=include_sync_workflow_jobs,
         )
     else:
-        query, params = get_jobs_query(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
+        query, params = get_jobs_query(since, until, date_field=date_field)
 
     with db.cursor() as cursor:
         cursor.execute(query, params)
@@ -274,10 +270,8 @@ def dashboard_jobs(
                     }
                 )
     else:
-        all_labels = _dashboard_job_labels(since, until, db, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
-        all_host_summaries = _dashboard_job_host_summaries(
-            since, until, db, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs
-        )
+        all_labels = _dashboard_job_labels(since, until, db, date_field=date_field)
+        all_host_summaries = _dashboard_job_host_summaries(since, until, db, date_field=date_field)
 
     results = []
     for data in rows:
