@@ -9,7 +9,12 @@ def _validate_date_field(date_field: str) -> None:
         raise ValueError(f'date_field must be one of {sorted(_ALLOWED_DATE_FIELDS)}, got {date_field!r}')
 
 
-def get_min_max_job_id_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_min_max_job_id_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+    include_sync_workflow_jobs: bool = False,
+) -> tuple[str, list]:
     """
     Return the min and max job IDs for the filtered window.
 
@@ -25,7 +30,7 @@ def get_min_max_job_id_query(since: datetime, until: datetime, date_field: str =
     Returns:
         Tuple of (SQL query string with placeholders, [params])
     """
-    where_clause, params = get_where_clause(since, until, date_field=date_field)
+    where_clause, params = get_where_clause(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
     query = f"""
         SELECT MIN(uj.id) AS min_id, MAX(uj.id) AS max_id
         FROM main_unifiedjob uj
@@ -35,7 +40,12 @@ def get_min_max_job_id_query(since: datetime, until: datetime, date_field: str =
     return query, params
 
 
-def get_where_clause(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_where_clause(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+    include_sync_workflow_jobs: bool = False,
+) -> tuple[str, list]:
     """
     Generate SQL WHERE clause for filtering jobs by a date range.
     Excludes sync and workflow jobs and includes only jobs with status 'failed' or 'successful'.
@@ -57,17 +67,23 @@ def get_where_clause(since: datetime, until: datetime, date_field: str = 'modifi
         Tuple of (SQL WHERE clause string with placeholders, [params])
     """
     _validate_date_field(date_field)
+    launch_filter = '' if include_sync_workflow_jobs else 'uj.launch_type NOT IN (%s, %s) AND '
     where_clause = f"""
-    WHERE uj.launch_type NOT IN (%s, %s)
-    AND (uj.status= %s OR uj.status = %s)
+    WHERE {launch_filter}(uj.status= %s OR uj.status = %s)
     AND uj.{date_field} >= %s
     AND uj.{date_field} < %s
     """
-    params = ['sync', 'workflow', 'failed', 'successful', since.isoformat(), until.isoformat()]
+    params = [] if include_sync_workflow_jobs else ['sync', 'workflow']
+    params.extend(['failed', 'successful', since.isoformat(), until.isoformat()])
     return where_clause, params
 
 
-def get_job_labels_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_job_labels_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+    include_sync_workflow_jobs: bool = False,
+) -> tuple[str, list]:
     """
     Generate SQL query to fetch job labels for jobs executed within the specified date range.
 
@@ -83,7 +99,7 @@ def get_job_labels_query(since: datetime, until: datetime, date_field: str = 'mo
         - main_unifiedjob_labels
         - main_unifiedjob (for filtering by date range)
     """
-    where_clause, params = get_where_clause(since, until, date_field=date_field)
+    where_clause, params = get_where_clause(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
     query = f"""
             SELECT
                 l.unifiedjob_id,
@@ -96,7 +112,12 @@ def get_job_labels_query(since: datetime, until: datetime, date_field: str = 'mo
     return query, params
 
 
-def get_job_host_summaries_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_job_host_summaries_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+    include_sync_workflow_jobs: bool = False,
+) -> tuple[str, list]:
     """
     Generate SQL query to fetch job host summaries for jobs executed within the specified date range.
 
@@ -112,7 +133,7 @@ def get_job_host_summaries_query(since: datetime, until: datetime, date_field: s
         - main_jobhostsummary
         - main_unifiedjob (for filtering by date range)
     """
-    where_clause, params = get_where_clause(since, until, date_field=date_field)
+    where_clause, params = get_where_clause(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
     query = f"""
          SELECT
             hs.id, hs.host_name, hs.host_id, hs.job_id
@@ -135,6 +156,7 @@ _JOBS_BASE_SQL = """SELECT
     uj.started,
     uj.finished,
     uj.status,
+    uj.launch_type,
     uj.elapsed,
     CASE WHEN
     uj.launch_type ='manual' or uj.launch_type ='relaunch' then u.id
@@ -155,7 +177,12 @@ _JOBS_BASE_SQL = """SELECT
     LEFT JOIN main_unifiedjobtemplate ujp on ujp.id = mj.project_id"""
 
 
-def get_jobs_query(since: datetime, until: datetime, date_field: str = 'modified') -> tuple[str, list]:
+def get_jobs_query(
+    since: datetime,
+    until: datetime,
+    date_field: str = 'modified',
+    include_sync_workflow_jobs: bool = False,
+) -> tuple[str, list]:
     """
     Generate SQL query to fetch jobs executed within the specified date range.
 
@@ -169,12 +196,19 @@ def get_jobs_query(since: datetime, until: datetime, date_field: str = 'modified
     Returns:
         Tuple of (SQL query string with placeholders, [params])
     """
-    where_clause, params = get_where_clause(since, until, date_field=date_field)
+    where_clause, params = get_where_clause(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
     query = f'{_JOBS_BASE_SQL} {where_clause} order by uj.{date_field}'
     return query, params
 
 
-def get_jobs_batch_query(since: datetime, until: datetime, after_id: int, batch_size: int, date_field: str = 'modified') -> tuple[str, list]:
+def get_jobs_batch_query(
+    since: datetime,
+    until: datetime,
+    after_id: int,
+    batch_size: int,
+    date_field: str = 'modified',
+    include_sync_workflow_jobs: bool = False,
+) -> tuple[str, list]:
     """
     Cursor-paginated variant of ``get_jobs_query``.
 
@@ -191,7 +225,7 @@ def get_jobs_batch_query(since: datetime, until: datetime, after_id: int, batch_
     Returns:
         Tuple of (SQL query string with placeholders, [params])
     """
-    where_clause, params = get_where_clause(since, until, date_field=date_field)
+    where_clause, params = get_where_clause(since, until, date_field=date_field, include_sync_workflow_jobs=include_sync_workflow_jobs)
     params += [after_id, batch_size]
     query = f"""{_JOBS_BASE_SQL}
     {where_clause} AND uj.id > %s
