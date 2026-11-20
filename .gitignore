@@ -60,3 +60,4 @@ metrics_utility/test/test_data/data/**/*.json
 /tools/collections/collections.json
 /tools/collections/galaxy.[0-9]*
 /tools/collections/hub.[0-9]*
+/rust/target/
