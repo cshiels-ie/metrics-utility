@@ -1,0 +1,27 @@
+[package]
+name = "metrics-utility-rs"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Rust port of metrics-utility billing CLI for Controller base image"
+repository.workspace = true
+
+[[bin]]
+name = "metrics-utility"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+clap.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# local crates
+vcpu = { path = "../crates/vcpu" }
